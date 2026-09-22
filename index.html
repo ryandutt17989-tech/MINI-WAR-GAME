@@ -1,0 +1,42 @@
+//this is day one of my first prohram . Iam designing a mini war game
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Mini war game-Day 1</title>
+        <script src="https://jsdeliver.net"></script>
+    </style>
+    </head>
+    <body>
+    <script></script>
+   // 1 player variables
+   let player={x:400,y:550,size:30,speed:5};
+// 2 INTIALISE THE BATTLEFIELD
+function init(){
+    create canvas(800,600);
+}
+// the game loop
+function update()
+// Draw dark grey ground 
+background(30,35,45);
+// Draw player tank (Blue)
+fill(50,150,225);
+rect(player.x-5,player.y-15,player.size,player.size)//tank body
+fill(0,100,200);
+rect(player.x-5,player.y-30,10,15);///tank turret barrel
+if(typeof window.lasers==='undefined'){
+    window.lasers=[i];
+}
+for(let i=0; i<window.lasers.length-1; i>=0; i--){
+    // Update and draw lasers
+    window.lasers[i].y-=window.lasers[i].speed;
+    fill(255,255,0);
+    rect(window.lasers[i].x-2,window.lasers[i].y,4,15);
+    if(window.lasers[i].y < 0){
+        window.lasers.splice(i,1);
+    }
+}
+}
+</script>
+</body>
+</html>
