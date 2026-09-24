@@ -2,84 +2,80 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Mini War Game - Day 1</title>
+  <title>Mini War Game</title>
 
-  <!-- Correct p5.js library URL -->
   <script src="https://cdn.jsdelivr.net/npm/p5@1.11.1/lib/p5.min.js"></script>
 </head>
 
 <body>
-  <script>
-    // Player variables
-    let player = {
-      x: 400,
-      y: 550,
-      size: 30,
-      speed: 5
-    };
+<script>
+  let player = {
+    x: 400,
+    y: 550,
+    size: 30,
+    speed: 5
+  };
 
-    // Store laser objects
-    let lasers = [];
+  // Empty array to store lasers
+  let lasers = [];
 
-    // Runs once when the game starts
-    function setup() {
-      createCanvas(800, 600);
+  function setup() {
+    createCanvas(800, 600);
+  }
+
+  function draw() {
+    // Battlefield background
+    background(30, 35, 45);
+
+    // Move player
+    if (keyIsDown(LEFT_ARROW)) {
+      player.x -= player.speed;
     }
 
-    // Runs repeatedly as the game loop
-    function draw() {
-      // Draw dark grey ground
-      background(30, 35, 45);
-
-      // Draw player tank body
-      fill(50, 150, 225);
-      rect(
-        player.x - player.size / 2,
-        player.y - player.size / 2,
-        player.size,
-        player.size
-      );
-
-      // Draw tank turret
-      fill(0, 100, 200);
-      rect(player.x - 5, player.y - 30, 10, 15);
-
-      // Move and draw lasers
-      for (let i = lasers.length - 1; i >= 0; i--) {
-        lasers[i].y -= lasers[i].speed;
-
-        fill(255, 255, 0);
-        rect(lasers[i].x - 2, lasers[i].y, 4, 15);
-
-        // Remove laser after it leaves the canvas
-        if (lasers[i].y < 0) {
-          lasers.splice(i, 1);
-        }
-      }
-
-      // Move player
-      if (keyIsDown(LEFT_ARROW)) {
-        player.x -= player.speed;
-      }
-
-      if (keyIsDown(RIGHT_ARROW)) {
-        player.x += player.speed;
-      }
-
-      // Keep player inside the canvas
-      player.x = constrain(player.x, 15, width - 15);
+    if (keyIsDown(RIGHT_ARROW)) {
+      player.x += player.speed;
     }
 
-    // Fire a laser when the spacebar is pressed
-    function keyPressed() {
-      if (key === " ") {
-        lasers.push({
-          x: player.x,
-          y: player.y - 30,
-          speed: 8
-        });
+    // Keep player inside the canvas
+    player.x = constrain(player.x, 15, width - 15);
+
+    // Draw tank body
+    fill(50, 150, 225);
+    rect(
+      player.x - player.size / 2,
+      player.y - player.size / 2,
+      player.size,
+      player.size
+    );
+
+    // Draw tank turret
+    fill(0, 100, 200);
+    rect(player.x - 5, player.y - 30, 10, 15);
+
+    // Update and draw every laser
+    for (let i = lasers.length - 1; i >= 0; i--) {
+      lasers[i].y -= lasers[i].speed;
+
+      fill(255, 255, 0);
+      rect(lasers[i].x - 2, lasers[i].y, 4, 15);
+
+      // Remove laser when it leaves the screen
+      if (lasers[i].y < 0) {
+        lasers.splice(i, 1);
       }
     }
-  </script>
+  }
+
+  // Fire a laser when Space is pressed
+  function keyPressed() {
+    if (keyCode === 32) {
+      lasers.push({
+        x: player.x,
+        y: player.y - 35,
+        speed: 8
+      });
+    }
+  }
+</script>
 </body>
 </html>
