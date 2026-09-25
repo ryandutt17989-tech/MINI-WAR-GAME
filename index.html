@@ -12,18 +12,31 @@ option appears.
   <title>Mini War Game</title>
   <script src="https://cdn.jsdelivr.net/npm/p5@1.11.1/lib/p5.min.js"></script>
   <style>
-    body {
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
       margin: 0;
-      background: #050d18;
+      width: 100%;
+      min-height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      overflow: hidden;
+      background: #050d18;
+      overflow-x: hidden;
       font-family: Arial, sans-serif;
     }
 
     canvas {
+      display: block;
+      width: min(900px, 95vw);
+      height: auto;
+      margin: 0 auto;
       border: 3px solid #4c6b8a;
       box-shadow: 0 0 30px rgba(101, 175, 255, 0.35);
       background: #091f33;
@@ -52,7 +65,8 @@ option appears.
   let shield = 0;
 
   function setup() {
-    createCanvas(900, 620);
+    const canvas = createCanvas(900, 620);
+    canvas.parent(document.body);
     resetGame();
 
     for (let i = 0; i < 120; i++) {
