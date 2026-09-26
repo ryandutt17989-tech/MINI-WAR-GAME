@@ -1,7 +1,8 @@
-//This mini war game is a simple browser-based shooting game built using HTML, CSS, and JavaScript. 
-The player controls a blue tank at the bottom of the screen, moves left and right to dodge enemies, and fires lasers to destroy incoming drones.
- The game includes a start menu, score tracking, lives, health, increasing difficulty, power-ups, explosions, and a game-over and restart system. 
- It is a fun and beginner-friendly project that teaches core game development concepts such as movement, collision detection, keyboard controls, animation, and
+This mini war game is a simple browser-based shooting game built using HTML, CSS, and JavaScript. 
+The player controls a blue tank at the bottom of the screen, moves left and right to dodge enemies, and
+ fires lasers to destroy incoming drones. The game includes a start menu, score tracking, lives, health, 
+ increasing difficulty, power-ups, explosions, and a game-over and restart system. It is a fun and beginner-friendly project 
+ that teaches core game development concepts such as movement, collision detection, keyboard controls, animation, and
   user interaction in a simple and interactive way.
 <!DOCTYPE html>
 <html lang="en">
@@ -12,13 +13,15 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
 
   <style>
     * {
+      margin: 0;
+      padding: 0;
       box-sizing: border-box;
     }
 
     html, body {
-      margin: 0;
       width: 100%;
       height: 100%;
+      overflow: hidden;
     }
 
     body {
@@ -26,33 +29,29 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
       justify-content: center;
       align-items: center;
       background: #050d18;
-      overflow: hidden;
       font-family: Arial, sans-serif;
     }
 
-    #game-container {
+    #p5-container {
+      width: 100%;
+      height: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
-      width: 100%;
-      height: 100vh;
     }
 
     canvas {
-      display: block;
-      width: min(900px, 95vw);
-      height: auto;
-      margin: 0 auto;
+      display: block !important;
+      max-width: 95vw;
+      max-height: 95vh;
       border: 3px solid #4c6b8a;
-      border-radius: 10px;
       box-shadow: 0 0 30px rgba(101, 175, 255, 0.35);
-      background: #091f33;
     }
   </style>
 </head>
 
 <body>
-  <div id="game-container"></div>
+  <div id="p5-container"></div>
 
   <script>
     let screen = "menu";
@@ -75,8 +74,10 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
     let shield = 0;
 
     function setup() {
+      const container = document.getElementById("p5-container");
       const canvas = createCanvas(900, 620);
-      canvas.parent("game-container");
+      canvas.parent("p5-container");
+
       resetGame();
 
       for (let i = 0; i < 120; i++) {
