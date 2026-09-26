@@ -1,8 +1,8 @@
-This mini war game is a simple browser-based shooting game built using HTML, CSS, and JavaScript. 
-The player controls a blue tank at the bottom of the screen, moves left and right to dodge enemies, and
-fires lasers to destroy incoming drones. The game includes a start menu, score tracking, lives, health, 
-increasing difficulty, power-ups, explosions, and a game-over and restart system. It is a fun and beginner-friendly project 
-that teaches core game development concepts such as movement, collision detection, keyboard controls, animation, and
+//This mini war game is a simple browser-based shooting game built using HTML, CSS, and JavaScript. 
+//The player controls a blue tank at the bottom of the screen, moves left and right to dodge enemies, and
+//fires lasers to destroy incoming drones. The game includes a start menu, score tracking, lives, health, 
+//increasing difficulty, power-ups, explosions, and a game-over and restart system. It is a fun and beginner-friendly project 
+//that teaches core game development concepts such as movement, collision detection, keyboard controls, animation, and
 user interaction in a simple and interactive way.
 <!DOCTYPE html>
 <html lang="en">
@@ -52,7 +52,6 @@ user interaction in a simple and interactive way.
     let enemies = [];
     let enemyBullets = [];
     let particles = [];
-    let powerUps = [];
     let stars = [];
 
     let score = 0;
@@ -62,17 +61,12 @@ user interaction in a simple and interactive way.
     let wave = 1;
     let spawnTimer = 0;
     let bossTimer = 0;
-    let shield = 0;
+    let fireCooldown = 0;
 
     let keys = {};
 
     window.addEventListener("keydown", (e) => {
       keys[e.key] = true;
-
-      if (e.code === "Space" && screen === "playing") {
-        fireBullet();
-        e.preventDefault();
-      }
 
       if (e.key === "p" || e.key === "P") {
         if (screen === "playing") {
@@ -137,7 +131,6 @@ user interaction in a simple and interactive way.
       enemies = [];
       enemyBullets = [];
       particles = [];
-      powerUps = [];
 
       score = 0;
       lives = 3;
@@ -145,7 +138,7 @@ user interaction in a simple and interactive way.
       wave = 1;
       spawnTimer = 0;
       bossTimer = 0;
-      shield = 0;
+      fireCooldown = 0;
 
       for (let i = 0; i < 120; i++) {
         stars.push({
@@ -226,7 +219,7 @@ user interaction in a simple and interactive way.
       ctx.fillStyle = "#aad2f0";
       ctx.font = "18px Arial";
       ctx.fillText("Move: A/D or Left/Right", canvas.width / 2, 440);
-      ctx.fillText("Fire: Spacebar", canvas.width / 2, 470);
+      ctx.fillText("Fire: Hold Spacebar", canvas.width / 2, 470);
       ctx.fillText("Pause: P", canvas.width / 2, 500);
 
       ctx.fillStyle = "#ffd64e";
@@ -240,7 +233,6 @@ user interaction in a simple and interactive way.
       updateEnemies();
       updateEnemyBullets();
       updateParticles();
-      updatePowerUps();
       spawnEnemies();
       checkCollisions();
 
@@ -261,16 +253,7 @@ user interaction in a simple and interactive way.
       drawEnemies();
       drawEnemyBullets();
       drawParticles();
-      drawPowerUps();
       drawHud();
-
-      if (shield > 0) {
-        ctx.strokeStyle = `rgba(110, 225, 255, 0.7)`;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(player.x, player.y, 40, 0, Math.PI * 2);
-        ctx.stroke();
-      }
     }
 
     function updatePlayer() {
@@ -283,6 +266,18 @@ user interaction in a simple and interactive way.
       }
 
       player.x = Math.max(30, Math.min(player.x, canvas.width - 30));
+
+      // Continuous firing on spacebar hold
+      if (keys[" "] && screen === "playing") {
+        if (fireCooldown <= 0) {
+          fireBullet();
+          fireCooldown = 8;
+        }
+      }
+
+      if (fireCooldown > 0) {
+        fireCooldown--;
+      }
     }
 
     function fireBullet() {
@@ -443,40 +438,6 @@ user interaction in a simple and interactive way.
       }
     }
 
-    function updatePowerUps() {
-      for (let i = powerUps.length - 1; i >= 0; i--) {
-        powerUps[i].y += 2.5;
-
-        if (
-          powerUps[i].x > player.x - 25 &&
-          powerUps[i].x < player.x + 25 &&
-          powerUps[i].y > player.y - 25 &&
-          powerUps[i].y < player.y + 25
-        ) {
-          shield = 420;
-          powerUps.splice(i, 1);
-          createExplosion(player.x, player.y, [120, 240, 255], 25);
-        }
-
-        if (powerUps[i].y > canvas.height + 10) {
-          powerUps.splice(i, 1);
-        }
-      }
-    }
-
-    function drawPowerUps() {
-      for (let p of powerUps) {
-        ctx.fillStyle = "#64f0ff";
-        ctx.fillRect(p.x - 8, p.y - 8, 16, 16);
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "12px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("S", p.x, p.y + 2);
-      }
-    }
-
     function createExplosion(x, y, colorSet = [255, 160, 60], count = 18) {
       for (let i = 0; i < count; i++) {
         particles.push({
@@ -532,10 +493,6 @@ user interaction in a simple and interactive way.
               enemies.splice(j, 1);
               score += e.boss ? 250 : 100;
               createExplosion(e.x, e.y, [255, 180, 70], e.boss ? 40 : 20);
-
-              if (Math.random() < 0.25) {
-                powerUps.push({ x: e.x, y: e.y, size: 10 });
-              }
             }
             break;
           }
@@ -550,13 +507,7 @@ user interaction in a simple and interactive way.
 
         if (dist < 28) {
           enemyBullets.splice(i, 1);
-
-          if (shield > 0) {
-            shield -= 80;
-          } else {
-            health -= 15;
-          }
-
+          health -= 15;
           createExplosion(player.x, player.y, [255, 80, 90], 12);
         }
       }
@@ -571,13 +522,7 @@ user interaction in a simple and interactive way.
           e.y < player.y + player.h / 2
         ) {
           enemies.splice(i, 1);
-
-          if (shield > 0) {
-            shield -= 120;
-          } else {
-            health -= 25;
-          }
-
+          health -= 25;
           createExplosion(e.x, e.y, [255, 80, 80], 25);
         }
       }
@@ -602,11 +547,6 @@ user interaction in a simple and interactive way.
 
       ctx.fillStyle = "#ffffff";
       ctx.fillText("Health", 200, 42);
-
-      if (shield > 0) {
-        ctx.fillStyle = "#64dcff";
-        ctx.fillText("Shield ON", canvas.width - 150, 20);
-      }
     }
 
     function drawPauseScreen() {
