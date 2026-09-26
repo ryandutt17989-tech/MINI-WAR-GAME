@@ -1,16 +1,14 @@
 This mini war game is a simple browser-based shooting game built using HTML, CSS, and JavaScript. 
 The player controls a blue tank at the bottom of the screen, moves left and right to dodge enemies, and
- fires lasers to destroy incoming drones. The game includes a start menu, score tracking, lives, health, 
- increasing difficulty, power-ups, explosions, and a game-over and restart system. It is a fun and beginner-friendly project 
- that teaches core game development concepts such as movement, collision detection, keyboard controls, animation, and
-  user interaction in a simple and interactive way.
+fires lasers to destroy incoming drones. The game includes a start menu, score tracking, lives, health, 
+increasing difficulty, power-ups, explosions, and a game-over and restart system. It is a fun and beginner-friendly project 
+that teaches core game development concepts such as movement, collision detection, keyboard controls, animation, and
+user interaction in a simple and interactive way.
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Mini War Game</title>
-  <script src="https://cdn.jsdelivr.net/npm/p5@1.11.1/lib/p5.min.js"></script>
-
   <style>
     * {
       margin: 0;
@@ -32,30 +30,23 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
       font-family: Arial, sans-serif;
     }
 
-    #p5-container {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
     canvas {
-      display: block !important;
-      max-width: 95vw;
-      max-height: 95vh;
+      display: block;
       border: 3px solid #4c6b8a;
       box-shadow: 0 0 30px rgba(101, 175, 255, 0.35);
+      background: #091f33;
     }
   </style>
 </head>
 
 <body>
-  <div id="p5-container"></div>
+  <canvas id="gameCanvas" width="900" height="620"></canvas>
 
   <script>
-    let screen = "menu";
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
 
+    let screen = "menu";
     let player;
     let bullets = [];
     let enemies = [];
@@ -73,31 +64,73 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
     let bossTimer = 0;
     let shield = 0;
 
-    function setup() {
-      const container = document.getElementById("p5-container");
-      const canvas = createCanvas(900, 620);
-      canvas.parent("p5-container");
+    let keys = {};
 
-      resetGame();
+    window.addEventListener("keydown", (e) => {
+      keys[e.key] = true;
 
-      for (let i = 0; i < 120; i++) {
-        stars.push({
-          x: random(width),
-          y: random(height),
-          r: random(1, 3),
-          s: random(0.5, 2)
-        });
+      if (e.code === "Space" && screen === "playing") {
+        fireBullet();
+        e.preventDefault();
       }
-    }
+
+      if (e.key === "p" || e.key === "P") {
+        if (screen === "playing") {
+          screen = "paused";
+        } else if (screen === "paused") {
+          screen = "playing";
+        }
+      }
+
+      if (e.key === "r" || e.key === "R") {
+        if (screen === "gameover") {
+          resetGame();
+          screen = "playing";
+        }
+      }
+    });
+
+    window.addEventListener("keyup", (e) => {
+      keys[e.key] = false;
+    });
+
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      if (screen === "menu") {
+        let bx = canvas.width / 2 - 130;
+        let by = 300;
+        let bw = 260;
+        let bh = 70;
+
+        if (mouseX > bx && mouseX < bx + bw && mouseY > by && mouseY < by + bh) {
+          resetGame();
+          screen = "playing";
+        }
+      }
+
+      if (screen === "gameover") {
+        let rx = canvas.width / 2 - 130;
+        let ry = canvas.height / 2 + 80;
+        let rw = 260;
+        let rh = 60;
+
+        if (mouseX > rx && mouseX < rx + rw && mouseY > ry && mouseY < ry + rh) {
+          resetGame();
+          screen = "playing";
+        }
+      }
+    });
 
     function resetGame() {
       player = {
-        x: width / 2,
-        y: height - 70,
+        x: canvas.width / 2,
+        y: canvas.height - 70,
         w: 42,
         h: 30,
-        speed: 7,
-        shield: 0
+        speed: 7
       };
 
       bullets = [];
@@ -113,84 +146,92 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
       spawnTimer = 0;
       bossTimer = 0;
       shield = 0;
+
+      for (let i = 0; i < 120; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: Math.random() * 2 + 1,
+          s: Math.random() * 1.5 + 0.5
+        });
+      }
     }
 
-    function draw() {
-      background(9, 18, 30);
+    function gameLoop() {
+      // Draw background
+      ctx.fillStyle = "#091f33";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // Draw stars
       for (let star of stars) {
         star.y += star.s;
-        if (star.y > height) {
+        if (star.y > canvas.height) {
           star.y = -10;
-          star.x = random(width);
+          star.x = Math.random() * canvas.width;
         }
-        fill(220, 235, 255, 180);
-        noStroke();
-        circle(star.x, star.y, star.r);
+        ctx.fillStyle = `rgba(220, 235, 255, 0.7)`;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+        ctx.fill();
       }
 
       if (screen === "menu") {
         drawMenu();
-        return;
-      }
-
-      if (screen === "playing") {
+      } else if (screen === "playing") {
         updateGame();
         drawGame();
-        return;
-      }
-
-      if (screen === "paused") {
+      } else if (screen === "paused") {
         drawGame();
         drawPauseScreen();
-        return;
-      }
-
-      if (screen === "gameover") {
+      } else if (screen === "gameover") {
         drawGame();
         drawGameOver();
       }
+
+      requestAnimationFrame(gameLoop);
     }
 
     function drawMenu() {
-      fill(98, 205, 255);
-      textAlign(CENTER, CENTER);
-      textSize(60);
-      textStyle(BOLD);
-      text("MINI WAR", width / 2, 150);
+      ctx.fillStyle = "#050d18";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      fill(236, 245, 255);
-      textSize(24);
-      text("Destroy enemy drones before they reach your base", width / 2, 200);
+      ctx.fillStyle = "#62cdff";
+      ctx.font = "bold 60px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("MINI WAR", canvas.width / 2, 150);
 
-      let bx = width / 2 - 130;
+      ctx.fillStyle = "#ecf5ff";
+      ctx.font = "24px Arial";
+      ctx.fillText("Destroy enemy drones before they reach your base", canvas.width / 2, 200);
+
+      // Play button
+      let bx = canvas.width / 2 - 130;
       let by = 300;
       let bw = 260;
       let bh = 70;
 
-      let hover =
-        mouseX > bx && mouseX < bx + bw &&
-        mouseY > by && mouseY < by + bh;
+      ctx.fillStyle = "#207dd0";
+      ctx.strokeStyle = "#a0dcff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 12);
+      ctx.fill();
+      ctx.stroke();
 
-      fill(hover ? color(84, 180, 255) : color(32, 120, 210));
-      stroke(160, 220, 255);
-      strokeWeight(2);
-      rect(bx, by, bw, bh, 12);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 28px Arial";
+      ctx.fillText("PLAY", canvas.width / 2, by + 42);
 
-      noStroke();
-      fill(255);
-      textSize(28);
-      text("PLAY", width / 2, by + 42);
+      ctx.fillStyle = "#aad2f0";
+      ctx.font = "18px Arial";
+      ctx.fillText("Move: A/D or Left/Right", canvas.width / 2, 440);
+      ctx.fillText("Fire: Spacebar", canvas.width / 2, 470);
+      ctx.fillText("Pause: P", canvas.width / 2, 500);
 
-      fill(170, 210, 240);
-      textSize(18);
-      text("Move: A/D or Left/Right", width / 2, 440);
-      text("Fire: Spacebar", width / 2, 470);
-      text("Pause: P", width / 2, 500);
-
-      fill(255, 214, 78);
-      textSize(22);
-      text("High Score: " + highScore, width / 2, 535);
+      ctx.fillStyle = "#ffd64e";
+      ctx.font = "22px Arial";
+      ctx.fillText("High Score: " + highScore, canvas.width / 2, 535);
     }
 
     function updateGame() {
@@ -209,11 +250,11 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
     }
 
     function drawGame() {
-      fill(25, 44, 66, 170);
-      rect(0, 0, width, height);
+      ctx.fillStyle = "rgba(25, 44, 66, 0.7)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      fill(18, 26, 34);
-      rect(0, height - 30, width, 30);
+      ctx.fillStyle = "#121a22";
+      ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
 
       drawPlayer();
       drawBullets();
@@ -224,28 +265,24 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
       drawHud();
 
       if (shield > 0) {
-        noFill();
-        stroke(110, 225, 255, 170);
-        strokeWeight(3);
-        ellipse(player.x, player.y, 80, 80);
-        noStroke();
+        ctx.strokeStyle = `rgba(110, 225, 255, 0.7)`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, 40, 0, Math.PI * 2);
+        ctx.stroke();
       }
     }
 
     function updatePlayer() {
-      if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) {
+      if (keys["a"] || keys["A"] || keys["ArrowLeft"]) {
         player.x -= player.speed;
       }
 
-      if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) {
+      if (keys["d"] || keys["D"] || keys["ArrowRight"]) {
         player.x += player.speed;
       }
 
-      player.x = constrain(player.x, 30, width - 30);
-
-      if (keyIsDown(32)) {
-        fireBullet();
-      }
+      player.x = Math.max(30, Math.min(player.x, canvas.width - 30));
     }
 
     function fireBullet() {
@@ -254,32 +291,23 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
     }
 
     function drawPlayer() {
-      push();
-      translate(player.x, player.y);
+      ctx.save();
+      ctx.translate(player.x, player.y);
 
-      if (shield > 0) {
-        noFill();
-        stroke(120, 220, 255, 150);
-        strokeWeight(3);
-        ellipse(0, 0, 76, 76);
-        noStroke();
-      }
+      ctx.fillStyle = "#40aaff";
+      ctx.strokeStyle = "#96dcff";
+      ctx.lineWidth = 2;
+      ctx.fillRect(-player.w / 2, -player.h / 2, player.w, player.h);
+      ctx.strokeRect(-player.w / 2, -player.h / 2, player.w, player.h);
 
-      fill(64, 170, 255);
-      stroke(150, 220, 255);
-      strokeWeight(2);
-      rectMode(CENTER);
-      rect(0, 0, player.w, player.h, 8);
+      ctx.fillStyle = "#0f5fbe";
+      ctx.fillRect(-6, -20, 12, 26);
 
-      fill(15, 95, 190);
-      rect(0, -20, 12, 26, 4);
+      ctx.fillStyle = "#647a85";
+      ctx.fillRect(-20, 15, 12, 14);
+      ctx.fillRect(8, 15, 12, 14);
 
-      fill(20, 38, 52);
-      rect(-20, 15, 12, 14, 3);
-      rect(8, 15, 12, 14, 3);
-
-      rectMode(CORNER);
-      pop();
+      ctx.restore();
     }
 
     function updateBullets() {
@@ -293,9 +321,9 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
     }
 
     function drawBullets() {
+      ctx.fillStyle = "#fff532";
       for (let b of bullets) {
-        fill(255, 245, 100);
-        rect(b.x, b.y, b.w, b.h);
+        ctx.fillRect(b.x, b.y, b.w, b.h);
       }
     }
 
@@ -303,17 +331,17 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
       spawnTimer++;
       bossTimer++;
 
-      wave = floor(score / 300) + 1;
-      let spawnDelay = max(25, 60 - wave * 4);
+      wave = Math.floor(score / 300) + 1;
+      let spawnDelay = Math.max(25, 60 - wave * 4);
 
       if (spawnTimer >= spawnDelay) {
         spawnTimer = 0;
 
-        let isBoss = score > 600 && bossTimer > 400 && random() < 0.18;
+        let isBoss = score > 600 && bossTimer > 400 && Math.random() < 0.18;
 
         if (isBoss) {
           enemies.push({
-            x: random(80, width - 80),
+            x: Math.random() * (canvas.width - 160) + 80,
             y: -60,
             size: 70,
             speed: 1.2,
@@ -323,10 +351,10 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
           bossTimer = 0;
         } else {
           enemies.push({
-            x: random(30, width - 30),
+            x: Math.random() * (canvas.width - 60) + 30,
             y: -30,
-            size: random(24, 42),
-            speed: random(1.5, 3.5 + wave * 0.4),
+            size: Math.random() * 18 + 24,
+            speed: Math.random() * 2 + 1.5 + wave * 0.4,
             health: 1,
             boss: false
           });
@@ -339,7 +367,7 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
         let enemy = enemies[i];
         enemy.y += enemy.speed;
 
-        if (!enemy.boss && random() < 0.02) {
+        if (!enemy.boss && Math.random() < 0.02) {
           enemyBullets.push({
             x: enemy.x,
             y: enemy.y + enemy.size / 2,
@@ -348,12 +376,12 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
           });
         }
 
-        if (enemy.boss && frameCount % 35 === 0) {
+        if (enemy.boss && Math.floor(Math.random() * 35) === 0) {
           enemyBullets.push({ x: enemy.x - 20, y: enemy.y + enemy.size / 2, r: 9, speed: 5 });
           enemyBullets.push({ x: enemy.x + 20, y: enemy.y + enemy.size / 2, r: 9, speed: 5 });
         }
 
-        if (enemy.y > height + 60) {
+        if (enemy.y > canvas.height + 60) {
           enemies.splice(i, 1);
           health -= 15;
         }
@@ -363,33 +391,35 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
     function drawEnemies() {
       for (let enemy of enemies) {
         if (enemy.boss) {
-          push();
-          translate(enemy.x, enemy.y);
+          ctx.save();
+          ctx.translate(enemy.x, enemy.y);
 
-          fill(220, 80, 80);
-          stroke(255, 170, 120);
-          strokeWeight(2);
+          ctx.fillStyle = "#dc5050";
+          ctx.strokeStyle = "#ffaa78";
+          ctx.lineWidth = 2;
+          ctx.fillRect(-enemy.size / 2, -enemy.size * 0.35, enemy.size, enemy.size * 0.7);
+          ctx.strokeRect(-enemy.size / 2, -enemy.size * 0.35, enemy.size, enemy.size * 0.7);
 
-          rectMode(CENTER);
-          rect(0, 0, enemy.size, enemy.size * 0.7, 10);
+          ctx.fillStyle = "#ffc83c";
+          ctx.beginPath();
+          ctx.arc(0, 0, 8, 0, Math.PI * 2);
+          ctx.fill();
 
-          fill(255, 200, 60);
-          circle(0, 0, 16);
+          // Health bar
+          ctx.fillStyle = "#281415";
+          ctx.fillRect(-30, -40, 60, 6);
+          ctx.fillStyle = "#78f082";
+          ctx.fillRect(-30, -40, 60 * (enemy.health / 8), 6);
 
-          rectMode(CORNER);
-          fill(40, 20, 30);
-          rect(-30, -40, 60, 6);
-          fill(120, 240, 130);
-          rect(-30, -40, 60 * (enemy.health / 8), 6);
-
-          pop();
+          ctx.restore();
         } else {
-          fill(210, 60, 80);
-          rectMode(CENTER);
-          rect(enemy.x, enemy.y, enemy.size, enemy.size * 0.7, 8);
-          fill(255, 190, 70);
-          circle(enemy.x, enemy.y, 8);
-          rectMode(CORNER);
+          ctx.fillStyle = "#d23c50";
+          ctx.fillRect(enemy.x - enemy.size / 2, enemy.y - enemy.size * 0.35, enemy.size, enemy.size * 0.7);
+
+          ctx.fillStyle = "#ffbe46";
+          ctx.beginPath();
+          ctx.arc(enemy.x, enemy.y, 4, 0, Math.PI * 2);
+          ctx.fill();
         }
       }
     }
@@ -398,7 +428,7 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
       for (let i = enemyBullets.length - 1; i >= 0; i--) {
         enemyBullets[i].y += enemyBullets[i].speed;
 
-        if (enemyBullets[i].y > height + 30) {
+        if (enemyBullets[i].y > canvas.height + 30) {
           enemyBullets.splice(i, 1);
         }
       }
@@ -406,8 +436,10 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
 
     function drawEnemyBullets() {
       for (let b of enemyBullets) {
-        fill(255, 75, 90);
-        circle(b.x, b.y, b.r);
+        ctx.fillStyle = "#ff4b5a";
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r / 2, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
 
@@ -426,7 +458,7 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
           createExplosion(player.x, player.y, [120, 240, 255], 25);
         }
 
-        if (powerUps[i].y > height + 10) {
+        if (powerUps[i].y > canvas.height + 10) {
           powerUps.splice(i, 1);
         }
       }
@@ -434,13 +466,14 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
 
     function drawPowerUps() {
       for (let p of powerUps) {
-        fill(100, 240, 255);
-        rect(p.x - 8, p.y - 8, 16, 16);
+        ctx.fillStyle = "#64f0ff";
+        ctx.fillRect(p.x - 8, p.y - 8, 16, 16);
 
-        fill(255);
-        textSize(12);
-        textAlign(CENTER, CENTER);
-        text("S", p.x, p.y + 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "12px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("S", p.x, p.y + 2);
       }
     }
 
@@ -449,10 +482,10 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
         particles.push({
           x,
           y,
-          vx: random(-4, 4),
-          vy: random(-4, 4),
-          size: random(3, 8),
-          life: random(20, 40),
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.5) * 8,
+          size: Math.random() * 5 + 3,
+          life: Math.random() * 20 + 20,
           color: colorSet
         });
       }
@@ -472,9 +505,10 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
 
     function drawParticles() {
       for (let p of particles) {
-        fill(p.color[0], p.color[1], p.color[2], p.life * 5);
-        noStroke();
-        circle(p.x, p.y, p.size);
+        ctx.fillStyle = `rgba(${p.color[0]}, ${p.color[1]}, ${p.color[2]}, ${p.life / 50})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
 
@@ -499,7 +533,7 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
               score += e.boss ? 250 : 100;
               createExplosion(e.x, e.y, [255, 180, 70], e.boss ? 40 : 20);
 
-              if (random() < 0.25) {
+              if (Math.random() < 0.25) {
                 powerUps.push({ x: e.x, y: e.y, size: 10 });
               }
             }
@@ -510,7 +544,11 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
 
       for (let i = enemyBullets.length - 1; i >= 0; i--) {
         let b = enemyBullets[i];
-        if (dist(b.x, b.y, player.x, player.y) < 28) {
+        let dx = b.x - player.x;
+        let dy = b.y - player.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < 28) {
           enemyBullets.splice(i, 1);
 
           if (shield > 0) {
@@ -546,80 +584,81 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
     }
 
     function drawHud() {
-      fill(255);
-      textAlign(LEFT, TOP);
-      textSize(20);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "20px Arial";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
 
-      fill(210, 235, 255);
-      text("Score: " + score, 20, 18);
-      text("Wave: " + wave, 20, 48);
-      text("Lives: " + lives, 20, 78);
+      ctx.fillStyle = "#d2ebff";
+      ctx.fillText("Score: " + score, 20, 18);
+      ctx.fillText("Wave: " + wave, 20, 48);
+      ctx.fillText("Lives: " + lives, 20, 78);
 
-      fill(30, 40, 50);
-      rect(200, 20, 190, 18, 9);
+      ctx.fillStyle = "#1e2832";
+      ctx.fillRect(200, 20, 190, 18);
 
-      fill(health > 50 ? color(80, 230, 120) : health > 25 ? color(255, 200, 80) : color(255, 80, 90));
-      rect(200, 20, 190 * (health / 100), 18, 9);
+      ctx.fillStyle = health > 50 ? "#50e678" : health > 25 ? "#ffc850" : "#ff5052";
+      ctx.fillRect(200, 20, 190 * (health / 100), 18);
 
-      fill(255);
-      text("Health", 200, 42);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText("Health", 200, 42);
 
       if (shield > 0) {
-        fill(100, 220, 255);
-        text("Shield ON", width - 150, 20);
+        ctx.fillStyle = "#64dcff";
+        ctx.fillText("Shield ON", canvas.width - 150, 20);
       }
     }
 
     function drawPauseScreen() {
-      fill(0, 0, 0, 180);
-      rect(0, 0, width, height);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      fill(255);
-      textAlign(CENTER, CENTER);
-      textSize(52);
-      text("PAUSED", width / 2, height / 2 - 20);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 52px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2 - 20);
 
-      fill(150, 210, 245);
-      textSize(22);
-      text("Press P to continue", width / 2, height / 2 + 35);
+      ctx.fillStyle = "#96d2f5";
+      ctx.font = "22px Arial";
+      ctx.fillText("Press P to continue", canvas.width / 2, canvas.height / 2 + 35);
     }
 
     function drawGameOver() {
-      fill(0, 0, 0, 200);
-      rect(0, 0, width, height);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      fill(255, 90, 90);
-      textAlign(CENTER, CENTER);
-      textSize(58);
-      text("GAME OVER", width / 2, height / 2 - 60);
+      ctx.fillStyle = "#ff5a5a";
+      ctx.font = "bold 58px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 60);
 
-      fill(255);
-      textSize(26);
-      text("Final Score: " + score, width / 2, height / 2 + 10);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "26px Arial";
+      ctx.fillText("Final Score: " + score, canvas.width / 2, canvas.height / 2 + 10);
 
       if (score > highScore) {
         highScore = score;
         localStorage.setItem("miniWarHighScore", highScore);
       }
 
-      let rx = width / 2 - 130;
-      let ry = height / 2 + 80;
+      let rx = canvas.width / 2 - 130;
+      let ry = canvas.height / 2 + 80;
       let rw = 260;
       let rh = 60;
 
-      let hover =
-        mouseX > rx && mouseX < rx + rw &&
-        mouseY > ry && mouseY < ry + rh;
+      ctx.fillStyle = "#228eaf";
+      ctx.strokeStyle = "#aadcff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(rx, ry, rw, rh, 12);
+      ctx.fill();
+      ctx.stroke();
 
-      fill(hover ? color(90, 185, 255) : color(34, 128, 210));
-      stroke(170, 220, 255);
-      strokeWeight(2);
-      rect(rx, ry, rw, rh, 12);
-
-      noStroke();
-      fill(255);
-      textSize(22);
-      text("RESTART", width / 2, ry + 38);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 22px Arial";
+      ctx.fillText("RESTART", canvas.width / 2, ry + 38);
     }
 
     function endGame() {
@@ -630,53 +669,8 @@ The player controls a blue tank at the bottom of the screen, moves left and righ
       screen = "gameover";
     }
 
-    function mousePressed() {
-      if (screen === "menu") {
-        let bx = width / 2 - 130;
-        let by = 300;
-        let bw = 260;
-        let bh = 70;
-
-        if (mouseX > bx && mouseX < bx + bw && mouseY > by && mouseY < by + bh) {
-          resetGame();
-          screen = "playing";
-        }
-      }
-
-      if (screen === "gameover") {
-        let rx = width / 2 - 130;
-        let ry = height / 2 + 80;
-        let rw = 260;
-        let rh = 60;
-
-        if (mouseX > rx && mouseX < rx + rw && mouseY > ry && mouseY < ry + rh) {
-          resetGame();
-          screen = "playing";
-        }
-      }
-    }
-
-    function keyPressed() {
-      if (key === "p" || key === "P") {
-        if (screen === "playing") {
-          screen = "paused";
-        } else if (screen === "paused") {
-          screen = "playing";
-        }
-      }
-
-      if (key === "r" || key === "R") {
-        if (screen === "gameover") {
-          resetGame();
-          screen = "playing";
-        }
-      }
-
-      if (keyCode === 32 && screen === "playing") {
-        fireBullet();
-        return false;
-      }
-    }
+    resetGame();
+    gameLoop();
   </script>
 </body>
 </html>
