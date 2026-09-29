@@ -1,6 +1,8 @@
 # MINI WAR
 
 A dynamic, browser-based shooting game built for the Pack-A-Hack hackathon by Ryan Dutt.
+#Screenshot
+![Screenshot of my game]https://photos.app.goo.gl/gcZ6kxCXk6VT9JnQ9
 
 ## Overview
 
